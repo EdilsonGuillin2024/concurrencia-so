@@ -1,0 +1,91 @@
+import threading
+import time
+import tkinter as tk
+from tkinter import messagebox
+
+# Funciones de concurrencia
+contador_global = 0  # Variable compartida
+mutex = threading.Lock()  # Mutex para evitar accesos concurrentes
+
+# PARTE 1: Mutex
+def incrementar():
+    global contador_global
+    mutex.acquire()
+    try:
+        contador_global += 1
+    finally:
+        mutex.release()
+
+def tarea_incremento():
+    for _ in range(100000):
+        incrementar()
+
+def ejecutar_mutex():
+    global contador_global
+    contador_global = 0
+    hilo1 = threading.Thread(target=tarea_incremento)
+    hilo2 = threading.Thread(target=tarea_incremento)
+    hilo1.start()
+    hilo2.start()
+    hilo1.join()
+    hilo2.join()
+    messagebox.showinfo("Resultado", f'El valor final del contador global es: {contador_global}')
+
+# PARTE 2: Barreras
+barrera = threading.Barrier(2)
+
+def tarea_barrera():
+    barrera.wait()
+
+def ejecutar_barrera():
+    hilo1 = threading.Thread(target=tarea_barrera)
+    hilo2 = threading.Thread(target=tarea_barrera)
+    hilo1.start()
+    hilo2.start()
+    hilo1.join()
+    hilo2.join()
+    messagebox.showinfo("Resultado", "Ambos hilos se sincronizaron con éxito (Barreras)")
+
+# PARTE 3: Eventos
+evento = threading.Event()
+
+def esperar_evento():
+    evento.wait()
+
+def activar_evento():
+    time.sleep(5)
+    evento.set()
+
+def ejecutar_evento():
+    hilo1 = threading.Thread(target=esperar_evento)
+    hilo2 = threading.Thread(target=activar_evento)
+    hilo1.start()
+    hilo2.start()
+    hilo1.join()
+    hilo2.join()
+    messagebox.showinfo("Resultado", "El evento fue activado y los hilos se sincronizaron correctamente")
+
+# Crear la ventana principal
+def crear_interfaz():
+    root = tk.Tk()
+    root.title("Concurrencia en Python")
+
+    # Crear botones para ejecutar cada parte del código
+    label = tk.Label(root, text="Seleccione la parte del código a ejecutar:")
+    label.pack(pady=10)
+
+    btn_mutex = tk.Button(root, text="Ejecutar Mutex", command=ejecutar_mutex, width=25)
+    btn_mutex.pack(pady=5)
+
+    btn_barrera = tk.Button(root, text="Ejecutar Barreras", command=ejecutar_barrera, width=25)
+    btn_barrera.pack(pady=5)
+
+    btn_evento = tk.Button(root, text="Ejecutar Eventos", command=ejecutar_evento, width=25)
+    btn_evento.pack(pady=5)
+
+    # Iniciar el bucle de la ventana
+    root.mainloop()
+
+# Ejecutar la interfaz gráfica
+crear_interfaz()
+
